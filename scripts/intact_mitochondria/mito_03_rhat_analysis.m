@@ -1,7 +1,7 @@
 %% ========================================================================
 % Rhat analysis for reduced intact-mitochondria MCMC chains.
 %
-% Expected reduced chain files:
+% Expected reduced chain files in results/intact_mitochondria/:
 %   chain1_result_palmier_reduced_uniform.mat
 %   chain2_result_palmier_reduced_uniform.mat
 %   chain3_result_palmier_reduced_uniform.mat
@@ -15,6 +15,13 @@
 
 clear; clc; close all;
 
+script_dir = fileparts(mfilename('fullpath'));
+if isempty(script_dir)
+    script_dir = pwd;
+end
+repo_dir = fileparts(fileparts(script_dir));
+out_dir  = fullfile(repo_dir, 'results', 'intact_mitochondria');
+
 chain_pattern = 'chain%d_result_palmier_reduced_uniform.mat';
 n_chains = 4;
 
@@ -24,7 +31,7 @@ quantity_names = {'Ts_max', 'Tm_max', 'Tp_max', ...
 
 chains_cell = cell(n_chains, 1);
 for c = 1:n_chains
-    chain_file = sprintf(chain_pattern, c);
+    chain_file = fullfile(out_dir, sprintf(chain_pattern, c));
     if exist(chain_file, 'file') ~= 2
         error('Missing reduced chain file: %s', chain_file);
     end
@@ -66,7 +73,7 @@ ylabel('Rhat');
 title('Reduced intact-mitochondria Rhat diagnostics');
 grid on;
 
-save('Rhat_reduced_uniform.mat', 'Rhat', 'quantity_names', 'N', 'n_chains');
+save(fullfile(out_dir, 'Rhat_reduced_uniform.mat'), 'Rhat', 'quantity_names', 'N', 'n_chains');
 
 %% =============================== Local functions ==========================
 function Rhat = compute_rhat(chains)

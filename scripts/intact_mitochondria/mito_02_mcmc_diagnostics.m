@@ -1,7 +1,7 @@
 %% ========================================================================
 % Single-chain diagnostics for reduced intact-mitochondria MCMC output.
 %
-% This script uses theta_samples from:
+% This script uses theta_samples from results/intact_mitochondria/:
 %   MCMC_Result_Palmier2_reduced_uniform.mat
 % or from:
 %   chain1_result_palmier_reduced_uniform.mat
@@ -11,9 +11,16 @@
 
 clear; clc; close all;
 
+script_dir = fileparts(mfilename('fullpath'));
+if isempty(script_dir)
+    script_dir = pwd;
+end
+repo_dir = fileparts(fileparts(script_dir));
+out_dir  = fullfile(repo_dir, 'results', 'intact_mitochondria');
+
 S = load_first_existing({ ...
-    'MCMC_Result_Palmier2_reduced_uniform.mat', ...
-    'chain1_result_palmier_reduced_uniform.mat'});
+    fullfile(out_dir, 'MCMC_Result_Palmier2_reduced_uniform.mat'), ...
+    fullfile(out_dir, 'chain1_result_palmier_reduced_uniform.mat')});
 
 if ~isfield(S, 'theta_samples')
     error('The selected result file must contain theta_samples.');
@@ -81,7 +88,7 @@ diagnostics = table(labels(:), ESS, mcse, postSD, ratio, ...
     'VariableNames', {'Quantity', 'ESS', 'MCSE', 'PosteriorSD', 'MCSE_over_SD'});
 disp(diagnostics);
 
-save('MCMC_Diagnostics_reduced_uniform.mat', ...
+save(fullfile(out_dir, 'MCMC_Diagnostics_reduced_uniform.mat'), ...
     'diagnostics', 'labels', 'ESS', 'mcse', 'postSD', 'ratio', 'acf', 'lags');
 
 %% =============================== Local functions ==========================

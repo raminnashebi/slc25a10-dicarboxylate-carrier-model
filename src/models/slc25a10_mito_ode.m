@@ -11,7 +11,7 @@
 % Phosphate flux is constrained by electroneutral DIC-Pi exchange:
 %   J_pho = J_suc + J_mal
 %% =====================================================================
-function dYdt = slc25a10_model_updated_REA( ...
+function dYdt = slc25a10_mito_ode( ...
     t, y, Vims_g, Vm_g, Ks_m, Km_m, Kp_m, Ts_max, Tm_max, Tp_max) %#ok<INUSD>
 % y = [Mm; Mims; Sm; Sims; Pm; Pims]
 

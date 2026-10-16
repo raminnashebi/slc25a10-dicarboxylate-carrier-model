@@ -12,9 +12,12 @@ script_dir = fileparts(mfilename('fullpath'));
 if isempty(script_dir)
     script_dir = pwd;
 end
-repo_dir = fileparts(script_dir);
+repo_dir = fileparts(fileparts(script_dir));
+addpath(fullfile(repo_dir, 'src', 'models'));
+data_dir = fullfile(repo_dir, 'data', 'intact_mitochondria');
+out_dir  = fullfile(repo_dir, 'results', 'intact_mitochondria');
 
-theta_point = load_mito_reduced_point(repo_dir, script_dir);
+theta_point = load_mito_reduced_point(out_dir);
 
 Ts_max = theta_point(1);
 Tm_max = theta_point(2);
@@ -35,7 +38,7 @@ fprintf('Derived lambda21=%.6g, lambda31=%.6g\n', lambda21, lambda31);
 Vm_g   = 7.0e-4;  % L/g
 Vims_g = 0.49;    % L/g
 
-data_file = fullfile(script_dir, 'Palmier_DIC_Competition_Exp_Data.mat');
+data_file = fullfile(data_dir, 'Palmier_DIC_Competition_Exp_Data.mat');
 if exist(data_file, 'file') ~= 2
     error('Missing data file: %s', data_file);
 end
@@ -54,7 +57,7 @@ Pims0 = 0.0;
 y0 = [Mm0; Mims0; Sm0; Sims0; Pm0; Pims0];
 tspan_sec = [0, 50];
 
-odefun = @(t, y) slc25a10_model_updated_REA( ...
+odefun = @(t, y) slc25a10_mito_ode( ...
     t, y, Vims_g, Vm_g, Ks_m, Km_m, Kp_m, Ts_max, Tm_max, Tp_max);
 
 opts = odeset('RelTol', 1.0e-10, 'AbsTol', 1.0e-13);
@@ -73,12 +76,9 @@ for k = 1:6
 end
 
 %% =============================== Local functions ==========================
-function theta_point = load_mito_reduced_point(repo_dir, script_dir)
+function theta_point = load_mito_reduced_point(out_dir)
     candidates = { ...
-        fullfile(script_dir, 'MCMC_Result_Palmier2_reduced_uniform.mat'), ...
-        fullfile(repo_dir, 'Bayesian_MCMC_MH_CODES', 'Mito_calibration', 'MCMC_Result_Palmier2_reduced_uniform.mat'), ...
-        fullfile(repo_dir, 'FIGURE_4', 'reduced_parameter_inference', 'MCMC_Result_Palmier2_reduced_uniform.mat'), ...
-        fullfile(repo_dir, 'FIGURE_4', 'reduced_parameter_inference', 'New Folder', 'MCMC_Result_Palmier2_reduced_uniform.mat')};
+        fullfile(out_dir, 'MCMC_Result_Palmier2_reduced_uniform.mat')};
 
     for k = 1:numel(candidates)
         if exist(candidates{k}, 'file') == 2

@@ -1,7 +1,7 @@
 %% ========================================================================
 % Rhat analysis for reduced proteoliposome MCMC chains.
 %
-% Expected reduced chain files:
+% Expected reduced chain files in results/proteoliposome/:
 %   chain1_result_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat
 %   chain2_result_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat
 %   chain3_result_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat
@@ -15,6 +15,13 @@
 
 clear; clc; close all;
 
+script_dir = fileparts(mfilename('fullpath'));
+if isempty(script_dir)
+    script_dir = pwd;
+end
+repo_dir = fileparts(fileparts(script_dir));
+out_dir  = fullfile(repo_dir, 'results', 'proteoliposome');
+
 chain_pattern = 'chain%d_result_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat';
 n_chains = 4;
 
@@ -22,7 +29,7 @@ quantity_names = {'Tmax_m', 'Tmax_p', 'K_D_m', 'K_D_p', 'rho_pm_derived', 'sigma
 
 chains_cell = cell(n_chains, 1);
 for c = 1:n_chains
-    chain_file = sprintf(chain_pattern, c);
+    chain_file = fullfile(out_dir, sprintf(chain_pattern, c));
     if exist(chain_file, 'file') ~= 2
         error('Missing reduced chain file: %s', chain_file);
     end
@@ -63,7 +70,7 @@ ylabel('Rhat');
 title('Reduced proteoliposome Rhat diagnostics');
 grid on;
 
-save('Rhat_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat', ...
+save(fullfile(out_dir, 'Rhat_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat'), ...
     'Rhat', 'quantity_names', 'N', 'n_chains');
 
 %% =============================== Local functions ==========================
