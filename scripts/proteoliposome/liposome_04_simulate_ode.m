@@ -12,9 +12,11 @@ script_dir = fileparts(mfilename('fullpath'));
 if isempty(script_dir)
     script_dir = pwd;
 end
-repo_dir = fileparts(script_dir);
+repo_dir = fileparts(fileparts(script_dir));
+addpath(fullfile(repo_dir, 'src', 'models'));
+out_dir  = fullfile(repo_dir, 'results', 'proteoliposome');
 
-theta_point = load_liposome_reduced_point(repo_dir, script_dir);
+theta_point = load_liposome_reduced_point(out_dir);
 
 Tmax_m = theta_point(1);
 Tmax_p = theta_point(2);
@@ -41,7 +43,7 @@ Pext0 = 0.0;
 y0 = [Mm0; Mext0; Pm0; Pext0];
 tspan_min = [0, 5];
 
-odefun = @(t, y) slc25a10_model_liposome_reduced_Jpho( ...
+odefun = @(t, y) slc25a10_liposome_ode( ...
     t, y, Vext_g, Vint_g, K_D_m, K_D_p, Tmax_m, Tmax_p);
 
 opts = odeset('RelTol', 1.0e-10, 'AbsTol', 1.0e-13);
@@ -67,12 +69,9 @@ legend({'P_{in}', 'P_{out}'}, 'Location', 'best');
 grid on;
 
 %% =============================== Local functions ==========================
-function theta_point = load_liposome_reduced_point(repo_dir, script_dir)
+function theta_point = load_liposome_reduced_point(out_dir)
     candidates = { ...
-        fullfile(script_dir, 'MCMC_Result_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat'), ...
-        fullfile(repo_dir, 'Bayesian_MCMC_MH_CODES', 'proteoliposome_calibration', 'MCMC_Result_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat'), ...
-        fullfile(repo_dir, 'FIGURE_5', 'reduced_parameter_Jpho', 'MCMC_Result_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat'), ...
-        fullfile(repo_dir, 'FIGURE_5', 'reduced_parameter_Jpho', 'New Folder', 'MCMC_Result_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat')};
+        fullfile(out_dir, 'MCMC_Result_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat')};
 
     for k = 1:numel(candidates)
         if exist(candidates{k}, 'file') == 2

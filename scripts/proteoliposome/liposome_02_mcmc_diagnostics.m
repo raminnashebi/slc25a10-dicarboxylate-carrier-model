@@ -1,7 +1,7 @@
 %% ========================================================================
 % Single-chain diagnostics for reduced proteoliposome MCMC output.
 %
-% This script uses theta_samples from:
+% This script uses theta_samples from results/proteoliposome/:
 %   MCMC_Result_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat
 % or from:
 %   chain1_result_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat
@@ -11,9 +11,16 @@
 
 clear; clc; close all;
 
+script_dir = fileparts(mfilename('fullpath'));
+if isempty(script_dir)
+    script_dir = pwd;
+end
+repo_dir = fileparts(fileparts(script_dir));
+out_dir  = fullfile(repo_dir, 'results', 'proteoliposome');
+
 S = load_first_existing({ ...
-    'MCMC_Result_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat', ...
-    'chain1_result_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat'});
+    fullfile(out_dir, 'MCMC_Result_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat'), ...
+    fullfile(out_dir, 'chain1_result_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat')});
 
 if ~isfield(S, 'theta_samples')
     error('The selected result file must contain theta_samples.');
@@ -79,7 +86,7 @@ diagnostics = table(labels(:), ESS, mcse, postSD, ratio, ...
     'VariableNames', {'Quantity', 'ESS', 'MCSE', 'PosteriorSD', 'MCSE_over_SD'});
 disp(diagnostics);
 
-save('MCMC_Diagnostics_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat', ...
+save(fullfile(out_dir, 'MCMC_Diagnostics_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat'), ...
     'diagnostics', 'labels', 'ESS', 'mcse', 'postSD', 'ratio', 'acf', 'lags');
 
 %% =============================== Local functions ==========================

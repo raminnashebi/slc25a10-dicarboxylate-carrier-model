@@ -20,14 +20,31 @@
 % Uniform priors are used for every inferred quantity in theta. Edit
 % theta_lb and theta_ub below if you want wider or narrower support.
 %
-% Output:
+% Input (data/intact_mitochondria/):
+%   Palmier_DIC_Exp_Data.mat
+%   Palmier_DIC_Competition_Exp_Data.mat
+%
+% Outputs written to results/intact_mitochondria/:
 %   MCMC_Result_Palmier2_reduced_uniform.mat
 %   posterior_summary_table_P6_lambdas_derived_uniform.tex
 %   Mito_FIGURE4_uniform.png
+%   Mito_FIGURE4_uniform.fig
 % ============================================================
 
 clear; clc; close all;
 rng(42);
+
+%% ----------------- Paths --------------------------------------------
+script_dir = fileparts(mfilename('fullpath'));
+if isempty(script_dir)
+    script_dir = pwd;
+end
+repo_dir = fileparts(fileparts(script_dir));
+data_dir = fullfile(repo_dir, 'data', 'intact_mitochondria');
+out_dir  = fullfile(repo_dir, 'results', 'intact_mitochondria');
+if ~exist(out_dir, 'dir')
+    mkdir(out_dir);
+end
 
 %% ----------------- Fixed matrix concentrations ----------------------
 Pm_mat_fix = 2;     % mM
@@ -35,13 +52,13 @@ Sm_mat_fix = 0.2;   % mM
 Mm_mat_fix = 0.2;   % mM
 
 %% ----------------- Load experimental data ---------------------------
-load('Palmier_DIC_Exp_Data.mat');             % S, T_S
+load(fullfile(data_dir, 'Palmier_DIC_Exp_Data.mat'));             % S, T_S
 Sc_v_succ  = S(:)';
 Mc_v_succ  = zeros(size(Sc_v_succ));
 Pc_v_succ  = zeros(size(Sc_v_succ));
 J_succ_exp = T_S(:)';
 
-load('Palmier_DIC_Competition_Exp_Data.mat'); % M_with_S, T_M_with_S, M_control, T_M_control
+load(fullfile(data_dir, 'Palmier_DIC_Competition_Exp_Data.mat')); % M_with_S, T_M_with_S, M_control, T_M_control
 Mc_v_mal   = (1 ./ M_with_S(:))';
 Sc_v_mal   = 0.5 * ones(size(Mc_v_mal));
 Pc_v_mal   = zeros(size(Mc_v_mal));
@@ -51,7 +68,7 @@ J_mal_exp  = (1 ./ T_M_with_S(:))';
 % uses the malate-control data from Palmier_DIC_Competition_Exp_Data.mat.
 
 
-load('Palmier_DIC_Exp_Data.mat'); 
+load(fullfile(data_dir, 'Palmier_DIC_Exp_Data.mat')); 
 Pc_v_pho   = (1 ./ P(:))' ;
 Mc_v_pho   = zeros(size(Pc_v_pho));
 Sc_v_pho   = zeros(size(Pc_v_pho));
@@ -149,7 +166,7 @@ fprintf('Ts_max=%.6g, Tm_max=%.6g, Tp_max=%.6g, Ks_D=%.6g, Km_D=%.6g, Kp_D=%.6g,
 fprintf('Derived lambda21=%.6g, lambda31=%.6g\n', lambda21_mean, lambda31_mean);
 
 %% ----------------- Save results -------------------------------------
-save('MCMC_Result_Palmier2_reduced_uniform.mat', ...
+save(fullfile(out_dir, 'MCMC_Result_Palmier2_reduced_uniform.mat'), ...
     'theta_samples', 'theta_samples_raw', 'posterior_samples_plot', ...
     'lambda21_samples', 'lambda31_samples', ...
     'lambda21_samples_raw', 'lambda31_samples_raw', ...
@@ -158,16 +175,17 @@ save('MCMC_Result_Palmier2_reduced_uniform.mat', ...
     'Pm_mat_fix', 'Sm_mat_fix', 'Mm_mat_fix', ...
     'theta_lb', 'theta_ub');
 
-write_summary_tex(theta_samples, lambda21_samples, lambda31_samples, acc, z_step);
+write_summary_tex(fullfile(out_dir, 'posterior_summary_table_P6_lambdas_derived_uniform.tex'), ...
+    theta_samples, lambda21_samples, lambda31_samples, acc, z_step);
 plot_reduced_posterior(theta_samples_raw, theta_samples, ...
     lambda21_samples_raw, lambda31_samples_raw, lambda21_samples, lambda31_samples);
 
 if exist('exportgraphics', 'file') == 2
-    exportgraphics(gcf, 'Mito_FIGURE4_uniform.png', 'Resolution', 300);
+    exportgraphics(gcf, fullfile(out_dir, 'Mito_FIGURE4_uniform.png'), 'Resolution', 300);
 else
-    print(gcf, 'Mito_FIGURE4_uniform.png', '-dpng', '-r300');
+    print(gcf, fullfile(out_dir, 'Mito_FIGURE4_uniform.png'), '-dpng', '-r300');
 end
-savefig(gcf, 'Mito_FIGURE4_uniform.fig');
+savefig(gcf, fullfile(out_dir, 'Mito_FIGURE4_uniform.fig'));
 
 %% ============================================================
 % Helper functions
@@ -282,7 +300,7 @@ else
 end
 end
 
-function write_summary_tex(theta_samples, lambda21_samples, lambda31_samples, acc, z_step)
+function write_summary_tex(out_file, theta_samples, lambda21_samples, lambda31_samples, acc, z_step)
 samples = [theta_samples(:,1:6), lambda21_samples, lambda31_samples, theta_samples(:,7)];
 names = {'$T^s_{\max}$', '$T^m_{\max}$', '$T^p_{\max}$', '$K^s_D$', '$K^m_D$', '$K^p_D$', ...
     '$\lambda_{21}$ (derived)', '$\lambda_{31}$ (derived)', '$\sigma^2$'};
@@ -293,7 +311,7 @@ stds = std(samples, 0, 1);
 cis = local_percentile(samples, [2.5 97.5]);
 fmt = @(x) sprintf('%.5g', x);
 
-fid = fopen('posterior_summary_table_P6_lambdas_derived_uniform.tex', 'w');
+fid = fopen(out_file, 'w');
 fprintf(fid, '\\begin{table}[ht]\n\\centering\n');
 fprintf(fid, '\\caption{Reduced-parameter MCMC posterior summary with bounded uniform priors. $\\lambda_{21}$ and $\\lambda_{31}$ are derived from each posterior sample.}\n');
 fprintf(fid, '\\label{tab:post_reduced_lambda_derived_uniform}\n\\small\n');
@@ -308,7 +326,7 @@ end
 fprintf(fid, '\\hline\n\\end{tabular}\n\\end{table}\n');
 fclose(fid);
 
-fprintf('Wrote posterior_summary_table_P6_lambdas_derived_uniform.tex (z_step=%g)\n', z_step);
+fprintf('Wrote %s (z_step=%g)\n', out_file, z_step);
 end
 
 function plot_reduced_posterior(theta_raw, theta_post, lambda21_raw, lambda31_raw, lambda21_post, lambda31_post)

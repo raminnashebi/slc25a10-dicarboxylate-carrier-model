@@ -12,7 +12,7 @@
 % This model uses the direct J_pho form used in the reduced Figure 5
 % proteoliposome calibration.
 %% =====================================================================
-function dYdt = slc25a10_model_liposome_reduced_Jpho( ...
+function dYdt = slc25a10_liposome_ode( ...
     t, y, Vext_g, Vint_g, K_D_m, K_D_p, Tmax_m, Tmax_p) %#ok<INUSD>
 % y = [Mm; Mext; Pm; Pext]
 

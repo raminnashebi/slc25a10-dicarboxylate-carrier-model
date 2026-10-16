@@ -20,7 +20,9 @@
 %   [4] K_D_p    mM
 %   [5] sigma2   (mmol/min/g protein)^2
 %
-% Outputs written in this folder:
+% Input: data/proteoliposome/*.mat (see load_liposome_data below).
+%
+% Outputs written to results/proteoliposome/:
 %   MCMC_Result_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat
 %   posterior_summary_table_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.tex
 %   Liposom_FIGURE4_gaussian_IGsigma_no_exMal1mM.png
@@ -38,15 +40,21 @@ script_dir = fileparts(mfilename('fullpath'));
 if isempty(script_dir)
     script_dir = pwd;
 end
+repo_dir = fileparts(fileparts(script_dir));
+data_dir = fullfile(repo_dir, 'data', 'proteoliposome');
+out_dir  = fullfile(repo_dir, 'results', 'proteoliposome');
+if ~exist(out_dir, 'dir')
+    mkdir(out_dir);
+end
 
-result_file = fullfile(script_dir, ...
+result_file = fullfile(out_dir, ...
     'MCMC_Result_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.mat');
 
 % Set this to false if you only want to regenerate figures from result_file.
 run_mcmc = true;
 
 %% ----------------- Step 1: Load Experimental Data -----------------
-data = load_liposome_data(script_dir);
+data = load_liposome_data(data_dir);
 n_total = numel(data.J_mal_exp) + numel(data.J_pho_exp);
 
 %% ----------------- Step 2: Prior and MCMC Settings ----------------
@@ -196,7 +204,7 @@ mean_J_P = mean(J_P_pred, 1);
 CI_J_P = local_percentile(J_P_pred, [2.5 97.5], 1);
 
 %% ----------------- Step 4: Save Summary and Figures ---------------
-write_summary_table(fullfile(script_dir, ...
+write_summary_table(fullfile(out_dir, ...
     'posterior_summary_table_liposome_reduced_Jpho_gaussian_IGsigma_no_exMal1mM.tex'), ...
     posterior_samples_plot, acc, z_step);
 
@@ -204,21 +212,21 @@ fprintf('\nPosterior summary, reduced Figure 5 model with Gaussian kinetic prior
 print_summary_to_console(posterior_mean, posterior_std, posterior_ci, acc);
 
 plot_liposom_posterior(theta_samples_raw, theta_samples);
-save_current_figure(script_dir, 'Liposom_FIGURE4_gaussian_IGsigma_no_exMal1mM');
+save_current_figure(out_dir, 'Liposom_FIGURE4_gaussian_IGsigma_no_exMal1mM');
 
 plot_fit_main(data, mean_J_M, CI_J_M, mean_J_P, CI_J_P);
-save_current_figure(script_dir, 'FIGURE_5_reduced_Jpho_gaussian_IGsigma_no_exMal1mM_fit_main');
+save_current_figure(out_dir, 'FIGURE_5_reduced_Jpho_gaussian_IGsigma_no_exMal1mM_fit_main');
 
 plot_fit_exmal_inpho(data, mean_J_M, CI_J_M);
-save_current_figure(script_dir, 'FIGURE_5_reduced_Jpho_gaussian_IGsigma_no_exMal1mM_fit_exMal_inPho');
+save_current_figure(out_dir, 'FIGURE_5_reduced_Jpho_gaussian_IGsigma_no_exMal1mM_fit_exMal_inPho');
 
-fprintf('\nSaved reduced Figure 5 outputs in:\n%s\n', script_dir);
+fprintf('\nSaved reduced Figure 5 outputs in:\n%s\n', out_dir);
 
 %% ========================= Helper Functions =========================
-function data = load_liposome_data(script_dir)
+function data = load_liposome_data(data_dir)
 % Keep experimental rates in mmol/min/g protein.
 
-S = load(fullfile(script_dir, 'Proteoliposome_intPho_exMAL.mat'));
+S = load(fullfile(data_dir, 'Proteoliposome_intPho_exMAL.mat'));
 n_m0 = numel(S.intPho_exMal);
 Pm_v_mal0 = 15 * ones(1, n_m0);
 Mc_v_mal0 = S.intPho_exMal(:).';
@@ -226,7 +234,7 @@ J_mal_exp0 = S.intPho_exMal_Rate(:).';
 Mm_v_mal0 = zeros(1, n_m0);
 Pc_v_mal0 = zeros(1, n_m0);
 
-S = load(fullfile(script_dir, 'Proteoliposome_intMAl_exPHO.mat'));
+S = load(fullfile(data_dir, 'Proteoliposome_intMAl_exPHO.mat'));
 n_p1 = numel(S.intMal_exPho);
 Pm_v_pho1 = zeros(1, n_p1);
 Mm_v_pho1 = 15 * ones(1, n_p1);
@@ -234,7 +242,7 @@ Pc_v_pho1 = S.intMal_exPho(:).';
 Mc_v_pho1 = zeros(1, n_p1);
 J_pho_exp1 = S.intMal_exPho_Rate(:).';
 
-S = load(fullfile(script_dir, 'Proteoliposome_1993_intPho_10mM_exMAL.mat'));
+S = load(fullfile(data_dir, 'Proteoliposome_1993_intPho_10mM_exMAL.mat'));
 n_m2 = numel(S.intPho_10mM_exMa);
 Pm_v_mal2 = 1.0 * ones(1, n_m2);
 Mc_v_mal2 = S.intPho_10mM_exMa(:).';
@@ -242,7 +250,7 @@ J_mal_exp2 = S.intPho_10mM_exMa_Rate(:).';
 Mm_v_mal2 = zeros(1, n_m2);
 Pc_v_mal2 = zeros(1, n_m2);
 
-S = load(fullfile(script_dir, 'Proteoliposome_1993_intPho_25mM_exMAL.mat'));
+S = load(fullfile(data_dir, 'Proteoliposome_1993_intPho_25mM_exMAL.mat'));
 n_m3 = numel(S.intPho_25mM_exMa);
 Pm_v_mal3 = 2.5 * ones(1, n_m3);
 Mc_v_mal3 = S.intPho_25mM_exMa(:).';
@@ -250,7 +258,7 @@ J_mal_exp3 = S.intPho_25mM_exMa_Rate(:).';
 Mm_v_mal3 = zeros(1, n_m3);
 Pc_v_mal3 = zeros(1, n_m3);
 
-S = load(fullfile(script_dir, 'Proteoliposome_1993_exMal_020mM_inPho.mat'));
+S = load(fullfile(data_dir, 'Proteoliposome_1993_exMal_020mM_inPho.mat'));
 n_m6 = numel(S.exMal_020mM_inPho);
 Pm_v_mal6 = S.exMal_020mM_inPho(:).';
 Mc_v_mal6 = 0.2 * ones(1, n_m6);
@@ -561,9 +569,9 @@ legend(ax, 'Location', 'best');
 hold(ax, 'off');
 end
 
-function save_current_figure(script_dir, base_name)
-png_file = fullfile(script_dir, [base_name, '.png']);
-fig_file = fullfile(script_dir, [base_name, '.fig']);
+function save_current_figure(out_dir, base_name)
+png_file = fullfile(out_dir, [base_name, '.png']);
+fig_file = fullfile(out_dir, [base_name, '.fig']);
 
 if exist('exportgraphics', 'file') == 2
     exportgraphics(gcf, png_file, 'Resolution', 300);
